@@ -26,7 +26,7 @@
 
 #ifdef AT_DEVICE_USING_L610
 
-#define L610_WAIT_CONNECT_TIME      5000
+#define L610_WAIT_CONNECT_TIME      20000 //5000
 #define L610_THREAD_STACK_SIZE      2048+1024
 #define L610_THREAD_PRIORITY        (RT_THREAD_PRIORITY_MAX/2)
 
@@ -49,11 +49,12 @@ static int l610_power_on(struct at_device *device)
     {
         return(RT_EOK);
     }
-
+    /* modified */
+    rt_pin_mode(l610->power_pin, PIN_MODE_OUTPUT);
     rt_pin_write(l610->power_pin, PIN_LOW);
     rt_thread_mdelay(2000);
     rt_pin_write(l610->power_pin, PIN_HIGH);
-    LOG_D("power on success.");
+    LOG_D("power on success.", l610->power_pin);
 
     return(RT_EOK);
 }
@@ -705,15 +706,17 @@ static void l610_init_thread_entry(void *parameter)
             goto __exit;
         }
 
-        /* disable echo */
-        AT_SEND_CMD(client, resp, 0, 300, "ATE0");
-        /* get module version */
-        AT_SEND_CMD(client, resp, 0, 300, "ATI");
+        /* disable echo modified */
+        AT_SEND_CMD(client, resp, 2, 3000, "ATE0");
+        /* get module version modified */
+        AT_SEND_CMD(client, resp, 0, 3000, "ATI");
         /* show module version */
         for (i = 0; i < (int)resp->line_counts - 1; i++)
         {
             LOG_D("%s", at_resp_get_line(resp, i + 1));
         }
+        /* modified */
+        rt_thread_mdelay(3000);
         /* check SIM card */
         for (i = 0; i < CPIN_RETRY; i++)
         {
@@ -734,6 +737,8 @@ static void l610_init_thread_entry(void *parameter)
         /* waiting for dirty data to be digested */
         rt_thread_mdelay(10);
 
+        /* modified */
+        rt_thread_mdelay(3000);
         /* check the GSM network is registered */
         for (i = 0; i < CREG_RETRY; i++)
         {
@@ -818,7 +823,7 @@ static void l610_init_thread_entry(void *parameter)
         {
             /* "CMCC" */
             LOG_I("%s device network operator: %s", device->name, parsed_data);
-            AT_SEND_CMD(client, resp, 0, 300, CSTT_CHINA_MOBILE);
+            AT_SEND_CMD(client, resp, 0, 3000, CSTT_CHINA_MOBILE);
 
         }
         else if (rt_strcmp(parsed_data, "CHN-UNICOM") == 0)
@@ -899,7 +904,6 @@ static int l610_net_init(struct at_device *device)
 {
 #ifdef AT_DEVICE_L610_INIT_ASYN
     rt_thread_t tid;
-
     tid = rt_thread_create("l610_net", l610_init_thread_entry, (void *)device,
                 L610_THREAD_STACK_SIZE, L610_THREAD_PRIORITY, 20);
     if (tid)
