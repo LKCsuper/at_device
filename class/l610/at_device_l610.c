@@ -26,7 +26,7 @@
 
 #ifdef AT_DEVICE_USING_L610
 
-#define L610_WAIT_CONNECT_TIME      20000 //5000
+#define L610_WAIT_CONNECT_TIME      20000 //20000 //5000
 #define L610_THREAD_STACK_SIZE      2048+1024
 #define L610_THREAD_PRIORITY        (RT_THREAD_PRIORITY_MAX/2)
 
@@ -51,9 +51,12 @@ static int l610_power_on(struct at_device *device)
     }
     /* modified */
     rt_pin_mode(l610->power_pin, PIN_MODE_OUTPUT);
+    /* modified */
+    rt_pin_mode(l610->power_pin, PIN_MODE_OUTPUT);
     rt_pin_write(l610->power_pin, PIN_LOW);
     rt_thread_mdelay(2000);
     rt_pin_write(l610->power_pin, PIN_HIGH);
+    LOG_D("power on success.", l610->power_pin);
     LOG_D("power on success.", l610->power_pin);
 
     return(RT_EOK);
@@ -717,6 +720,8 @@ static void l610_init_thread_entry(void *parameter)
         }
         /* modified */
         rt_thread_mdelay(3000);
+        /* modified */
+        rt_thread_mdelay(3000);
         /* check SIM card */
         for (i = 0; i < CPIN_RETRY; i++)
         {
@@ -737,6 +742,8 @@ static void l610_init_thread_entry(void *parameter)
         /* waiting for dirty data to be digested */
         rt_thread_mdelay(10);
 
+        /* modified */
+        rt_thread_mdelay(3000);
         /* modified */
         rt_thread_mdelay(3000);
         /* check the GSM network is registered */
